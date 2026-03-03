@@ -1,0 +1,19 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "artillery-duel"
+version = "0.1.0"
+description = "A classic C64-style artillery duel game"
+requires-python = ">=3.11"
+dependencies = [
+    "pygame-ce>=2.5.0",
+    "numpy>=1.26.0",
+]
+
+[project.scripts]
+artillery = "artillery.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/artillery"]
