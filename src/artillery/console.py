@@ -5,14 +5,19 @@ from typing import Callable
 
 import pygame
 
+from . import scaling
+
 # Visual constants
 CONSOLE_HEIGHT_RATIO = 0.40
 BG_COLOR = (10, 10, 10, 200)
 OUTPUT_COLOR = (0, 220, 80)     # terminal green
 INPUT_COLOR = (255, 255, 255)
 PROMPT = "> "
-FONT_SIZE = 14
-LINE_PAD = 2
+_BASE_FONT_SIZE = 14
+_BASE_LINE_PAD = 2
+_BASE_INNER_PAD = 4
+_BASE_LEFT_PAD = 6
+_BASE_BOTTOM_PAD = 4
 
 
 class DebugConsole:
@@ -27,9 +32,15 @@ class DebugConsole:
         self.panel_height = int(screen_height * CONSOLE_HEIGHT_RATIO)
         self.visible = False
 
-        self._font = pygame.font.SysFont("monospace", FONT_SIZE)
-        self._line_h = self._font.get_linesize() + LINE_PAD
-        self._max_output_lines = (self.panel_height - self._line_h - 8) // self._line_h
+        s = scaling.scale
+        font_size = round(_BASE_FONT_SIZE * s)
+        self._inner_pad = round(_BASE_INNER_PAD * s)
+        self._left_pad = round(_BASE_LEFT_PAD * s)
+        self._bottom_pad = round(_BASE_BOTTOM_PAD * s)
+
+        self._font = pygame.font.SysFont("monospace", font_size)
+        self._line_h = self._font.get_linesize() + round(_BASE_LINE_PAD * s)
+        self._max_output_lines = (self.panel_height - self._line_h - self._inner_pad * 2) // self._line_h
 
         self._output: deque[str] = deque(maxlen=200)
         self._input: str = ""
@@ -85,16 +96,16 @@ class DebugConsole:
 
         # Output lines
         visible = list(self._output)[-self._max_output_lines:]
-        y = 4
+        y = self._inner_pad
         for line in visible:
             surf = self._font.render(line, True, OUTPUT_COLOR)
-            self._surface.blit(surf, (6, y))
+            self._surface.blit(surf, (self._left_pad, y))
             y += self._line_h
 
         # Input line
         cursor = "_" if self._cursor_on else " "
         surf = self._font.render(PROMPT + self._input + cursor, True, INPUT_COLOR)
-        self._surface.blit(surf, (6, self.panel_height - self._line_h - 4))
+        self._surface.blit(surf, (self._left_pad, self.panel_height - self._line_h - self._bottom_pad))
 
         screen.blit(self._surface, (0, 0))
 
