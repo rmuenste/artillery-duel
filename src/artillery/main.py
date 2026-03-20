@@ -62,10 +62,11 @@ _BASE_EXPLOSION_RADIUS: float = 20.0
 
 
 class GameState:
-    def __init__(self, body_surf: pygame.Surface, barrel_surf: pygame.Surface, style: str = 'modern') -> None:
+    def __init__(self, body_surf: pygame.Surface, barrel_surf: pygame.Surface, damage_surfs: list[pygame.Surface], style: str = 'modern') -> None:
         self.roughness: float = 0.6
         self._body   = body_surf
         self._barrel = barrel_surf
+        self._damage_surfs = damage_surfs
         self.style   = style
         self._mountain_surf: pygame.Surface | None = None
         self.terrain = Terrain(roughness=self.roughness)
@@ -101,8 +102,8 @@ class GameState:
     def _make_tanks(self) -> list[Tank]:
         (cx0, sy0), (cx1, sy1) = self.terrain.platforms
         return [
-            Tank(self._body, self._barrel, cx0, sy0, facing="right"),  # left side, fires right
-            Tank(self._body, self._barrel, cx1, sy1, facing="left"),   # right side, fires left
+            Tank(self._body, self._barrel, cx0, sy0, facing="right", damage_surfs=self._damage_surfs),
+            Tank(self._body, self._barrel, cx1, sy1, facing="left",  damage_surfs=self._damage_surfs),
         ]
 
 
@@ -364,10 +365,16 @@ def main() -> None:
     if _BG_PATH.exists():
         _background = _load_background(scaling.width, scaling.height)
 
-    body_surf   = _load_and_scale_sprite(_IMAGES / "tank_scaled.png", _BASE_BODY_SIZE)
-    barrel_surf = _load_and_scale_sprite(_IMAGES / "barrel_scaled.png", _BASE_BARREL_SIZE)
+    body_surf   = _load_and_scale_sprite(_IMAGES / "tank_scaled.png",       _BASE_BODY_SIZE)
+    barrel_surf = _load_and_scale_sprite(_IMAGES / "barrel_scaled.png",    _BASE_BARREL_SIZE)
+    damage_surfs = [
+        _load_and_scale_sprite(_IMAGES / "tank_dam_st1_scaled.png", _BASE_BODY_SIZE),
+        _load_and_scale_sprite(_IMAGES / "tank_dam_st2_scaled.png", _BASE_BODY_SIZE),
+        _load_and_scale_sprite(_IMAGES / "tank_dam_st3_scaled.png", _BASE_BODY_SIZE),
+        _load_and_scale_sprite(_IMAGES / "tank_dest_scaled.png",    _BASE_BODY_SIZE),
+    ]
 
-    state   = GameState(body_surf, barrel_surf, style=args.style)
+    state   = GameState(body_surf, barrel_surf, damage_surfs, style=args.style)
     console = DebugConsole(scaling.width, scaling.height)
     register_commands(console, state)
     console.print("Artillery Duel — debug console")
@@ -429,6 +436,8 @@ def main() -> None:
                 sounds.play_explosion()
                 ix, iy = round(state.shell.x), round(state.shell.y)
                 state.explosions.append((ix, iy, state.explosion_radius, _EXPLOSION_DURATION))
+                if hit == "tank" and state.shell.hit_tank_idx is not None:
+                    state.tanks[state.shell.hit_tank_idx].register_hit()
                 state.terrain.carve_crater(ix, iy, round(state.explosion_radius))
                 state.surface = state._make_surface()
                 state.shell = None

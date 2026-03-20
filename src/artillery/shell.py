@@ -38,6 +38,7 @@ class Shell:
         self.vx = vx
         self.vy = vy
         self.alive = True
+        self.hit_tank_idx: int | None = None
 
     # ------------------------------------------------------------------ #
     # Factory                                                              #
@@ -102,6 +103,7 @@ class Shell:
                 continue
             if tank.hit_test(ix, iy):
                 self.alive = False
+                self.hit_tank_idx = i
                 return "tank"
 
         return None

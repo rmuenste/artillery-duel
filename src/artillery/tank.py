@@ -75,6 +75,8 @@ class Tank:
     facing="right" → fires right (left-side player, body/barrel flipped)
     """
 
+    MAX_HITS: int = 4
+
     def __init__(
         self,
         body_surf: pygame.Surface,
@@ -82,24 +84,45 @@ class Tank:
         cx: int,
         sy: int,
         facing: str,
+        damage_surfs: list[pygame.Surface] | None = None,
     ) -> None:
         self.cx = cx
         self.sy = sy
         self.facing = facing
         self.aim_angle: float = 45.0   # degrees above horizontal
         self.power: float = 0.5        # normalised 0..1 (mid = default)
+        self.hits: int = 0
 
         if facing == "right":
             body_surf   = pygame.transform.flip(body_surf,   True, False)
             barrel_surf = pygame.transform.flip(barrel_surf, True, False)
+            damage_surfs = [pygame.transform.flip(s, True, False) for s in (damage_surfs or [])]
+        else:
+            damage_surfs = list(damage_surfs or [])
 
         self.body   = body_surf
         self.barrel = barrel_surf
+        self._damage_surfs: list[pygame.Surface] = damage_surfs
 
         # Breech pivot on the (possibly flipped) barrel surface — keep as float
         # so the sub-pixel position doesn't trace a circle when rotated.
         self._breech_local: tuple[float, float] = (0.0, 0.0)
         self._update_breech_local()
+
+    @property
+    def destroyed(self) -> bool:
+        return self.hits >= self.MAX_HITS
+
+    @property
+    def _current_body(self) -> pygame.Surface:
+        if self.hits == 0 or not self._damage_surfs:
+            return self.body
+        idx = min(self.hits - 1, len(self._damage_surfs) - 1)
+        return self._damage_surfs[idx]
+
+    def register_hit(self) -> None:
+        """Record a hit on this tank (capped at MAX_HITS)."""
+        self.hits = min(self.hits + 1, self.MAX_HITS)
 
     def _update_breech_local(self) -> None:
         """Recompute _breech_local from the current BREECH_ON_BARREL constant.
@@ -158,12 +181,14 @@ class Tank:
 
     def hit_test(self, sx: int, sy: int) -> bool:
         """Return True if screen point (sx, sy) hits a non-transparent body pixel."""
+        if self.destroyed:
+            return False
         rect = self.body_rect()
         if not rect.collidepoint(sx, sy):
             return False
         local_x = sx - rect.x
         local_y = sy - rect.y
-        alpha = self.body.get_at((local_x, local_y)).a
+        alpha = self._current_body.get_at((local_x, local_y)).a
         return alpha > 0
 
     def draw(
@@ -176,7 +201,10 @@ class Tank:
         body_x = self.cx - bw // 2
         body_y = self.sy - bh + round(_BASE_BODY_Y_OFFSET * scaling.scale)
 
-        screen.blit(self.body, (body_x, body_y))
+        screen.blit(self._current_body, (body_x, body_y))
+
+        if self.destroyed:
+            return
 
         turret = self.turret_screen_pos()
 

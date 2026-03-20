@@ -4,10 +4,45 @@ A classic C64-style two-player artillery duel game built with pygame-ce. Players
 
 ---
 
+## Installation
+
+**Requirements:** Python 3.11+
+
+1. **Clone the repository**
+
+   ```
+   git clone <repo-url>
+   cd artillery-duel
+   ```
+
+2. **Create and activate a virtual environment**
+
+   ```
+   python -m venv .venv
+   source .venv/bin/activate      # Linux / macOS
+   .venv\Scripts\activate         # Windows
+   ```
+
+3. **Install the package** (run from the `artillery-duel/` directory, where `pyproject.toml` lives)
+
+   ```
+   pip install -e .
+   ```
+
+   This installs all dependencies (`pygame-ce`, `numpy`) and registers the `artillery` command.
+
+4. **Run the game**
+
+   ```
+   artillery
+   ```
+
+---
+
 ## Running the Game
 
 ```
-artillery-duel [--res RESOLUTION]
+artillery [--res RESOLUTION]
 ```
 
 **Resolution presets:** `600p` (800×600, default), `720p`, `1080p`, `1440p`
