@@ -63,10 +63,11 @@ class Shell:
     # Simulation                                                           #
     # ------------------------------------------------------------------ #
 
-    def update(self, dt_s: float, grav: float | None = None) -> None:
+    def update(self, dt_s: float, grav: float | None = None, wind: float = 0.0) -> None:
         if not self.alive:
             return
         g = grav if grav is not None else gravity()
+        self.vx += wind * dt_s
         self.vy += g * dt_s
         self.x += self.vx * dt_s
         self.y += self.vy * dt_s

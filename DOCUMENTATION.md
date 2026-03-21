@@ -1,6 +1,6 @@
 # Artillery Duel — Documentation
 
-A classic C64-style two-player artillery duel game built with pygame-ce. Players take turns adjusting aim and power, then fire shells across procedurally generated terrain.
+A classic C64-style two-player artillery duel game built with pygame-ce. Players enter their names, roll a dice to decide who goes first, then take turns adjusting aim and power to fire shells across procedurally generated terrain. Destroy the opponent's tank to win.
 
 ---
 
@@ -22,7 +22,6 @@ A classic C64-style two-player artillery duel game built with pygame-ce. Players
    source .venv/bin/activate      # Linux / macOS
    .venv\Scripts\activate         # Windows
    ```
-   claude --resume dd31ced6-3a33-42c1-943f-6495aa867194
 
 3. **Install the package** (run from the `artillery-duel/` directory, where `pyproject.toml` lives)
 
@@ -53,14 +52,38 @@ All dimensions, physics, and UI elements scale automatically to the target resol
 
 ---
 
+## Game Flow
+
+1. **Name Entry** — Enter names for both players (max 12 characters each). Press Enter/Tab to advance between fields. Defaults to "Player 1" / "Player 2" if left blank.
+2. **Dice Roll** — An animated dice determines who fires first. Odd = Player 1, even = Player 2.
+3. **Turn-Based Play** — Players alternate turns: aim with arrow keys, set power with Up/Down, fire with Space. After each shot resolves (hit or miss), turns switch automatically with a brief announcement overlay.
+4. **Win Screen** — When a tank is destroyed, the winner is announced with a pulsing text display.
+5. **Play Again** — Press Y to start a new game (names are kept) or N/ESC to quit.
+
+---
+
 ## Controls
+
+### During Aiming Phase
 
 | Key | Action |
 |-----|--------|
 | `SPACE` | Fire |
 | `LEFT` / `RIGHT` | Adjust aim angle |
 | `UP` / `DOWN` | Adjust power |
-| `TAB` | Switch active tank |
+
+### Name Entry Phase
+
+| Key | Action |
+|-----|--------|
+| Printable keys | Type name (max 12 chars) |
+| `BACKSPACE` | Delete character |
+| `ENTER` / `TAB` | Next field or confirm |
+
+### All Phases
+
+| Key | Action |
+|-----|--------|
 | `F12` | Toggle debug console |
 | `ESC` | Quit |
 
@@ -69,7 +92,7 @@ All dimensions, physics, and UI elements scale automatically to the target resol
 ## Architecture Overview
 
 ```
-main.py        — game loop, input, rendering, command registration
+main.py        — game loop, phases, input, rendering, command registration
 scaling.py     — resolution-independent scale factor
 terrain.py     — procedural terrain generation
 tank.py        — tank model, sprite composition, barrel rotation
@@ -81,6 +104,24 @@ sounds.py      — audio loading and playback
 ---
 
 ## Module Reference
+
+### `main.py` — Game Phases
+
+The game is driven by a `Phase` enum that gates input handling, updates, and overlay rendering:
+
+| Phase | Description |
+|-------|-------------|
+| `NAME_ENTRY` | Two text fields for player names with blinking cursor |
+| `DICE_ROLL` | Animated dice roll to determine first player |
+| `TURN_ANNOUNCE` | 1.5s overlay showing whose turn it is |
+| `AIMING` | Active player adjusts aim/power, fires with Space |
+| `SHELL_FLIGHT` | Shell physics run; on resolve, checks for win or switches turns |
+| `WIN_SCREEN` | Pulsing winner announcement; any key after 3s advances |
+| `PLAY_AGAIN` | Y/N prompt; Y regenerates terrain (keeps names), N quits |
+
+`GameState.reset_for_new_game()` regenerates terrain and tanks, resets the dice, and transitions to `DICE_ROLL` while preserving player names.
+
+---
 
 ### `scaling.py`
 
