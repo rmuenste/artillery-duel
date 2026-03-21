@@ -355,6 +355,7 @@ def main() -> None:
     scaling.init(res_w, res_h)
 
     pygame.init()
+    pygame.mixer.init()
     screen = pygame.display.set_mode((scaling.width, scaling.height))
     pygame.display.set_caption("Artillery Duel")
     clock = pygame.time.Clock()
