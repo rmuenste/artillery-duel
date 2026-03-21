@@ -22,6 +22,7 @@ A classic C64-style two-player artillery duel game built with pygame-ce. Players
    source .venv/bin/activate      # Linux / macOS
    .venv\Scripts\activate         # Windows
    ```
+   claude --resume dd31ced6-3a33-42c1-943f-6495aa867194
 
 3. **Install the package** (run from the `artillery-duel/` directory, where `pyproject.toml` lives)
 
